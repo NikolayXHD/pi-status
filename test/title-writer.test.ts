@@ -1,43 +1,35 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  installTitleWriter,
-  type TitleStream,
-} from "../src/title-writer.ts";
+import { installTitleWriter } from "../src/title-writer.ts";
+import { fakeTitleStream } from "./helpers.ts";
 
-interface FakeStream extends TitleStream {
-  writes: string[];
-}
-
-function fakeStream(): FakeStream {
-  const writes: string[] = [];
-  return {
-    writes,
-    write(chunk: string | Uint8Array): boolean {
-      writes.push(String(chunk));
-      return true;
-    },
-  };
-}
+const INTERCEPTED_TITLES = [
+  "\u001b]0;core title\u0007",
+  "\u001b]2;tab title\u001b\\",
+] as const;
 
 test("when core writes a title then our title replaces it", () => {
-  const stream = fakeStream();
-  let current = "ours";
-  const writer = installTitleWriter(stream, () => current);
+  for (const titleSequence of INTERCEPTED_TITLES) {
+    const stream = fakeTitleStream();
+    const writer = installTitleWriter(stream, () => "ours");
 
-  stream.write("\u001b]0;core title\u0007");
-  assert.deepEqual(stream.writes, ["\u001b]0;ours\u0007"]);
+    stream.write(titleSequence);
+    assert.deepEqual(stream.writes, ["\u001b]0;ours\u0007"]);
+    writer.dispose();
+  }
+});
 
-  current = "next";
+test("when render is called then title is written", () => {
+  const stream = fakeTitleStream();
+  const writer = installTitleWriter(stream, () => "ours");
+
   writer.render();
-  assert.deepEqual(stream.writes, [
-    "\u001b]0;ours\u0007",
-    "\u001b]0;next\u0007",
-  ]);
+  assert.deepEqual(stream.writes, ["\u001b]0;ours\u0007"]);
+  writer.dispose();
 });
 
 test("when a non-title write happens then it passes through", () => {
-  const stream = fakeStream();
+  const stream = fakeTitleStream();
   const writer = installTitleWriter(stream, () => "ours");
 
   stream.write("plain output");
@@ -45,17 +37,28 @@ test("when a non-title write happens then it passes through", () => {
   writer.dispose();
 });
 
-test("when OSC 2 is written then it is replaced too", () => {
-  const stream = fakeStream();
+test("when a title sequence is embedded in a larger chunk then it passes through", () => {
+  const stream = fakeTitleStream();
   const writer = installTitleWriter(stream, () => "ours");
+  const chunk = "prefix\u001b]0;core title\u0007";
 
-  stream.write("\u001b]2;tab title\u001b\\");
-  assert.deepEqual(stream.writes, ["\u001b]0;ours\u0007"]);
+  stream.write(chunk);
+  assert.deepEqual(stream.writes, [chunk]);
+  writer.dispose();
+});
+
+test("when a title sequence is a buffer then it passes through", () => {
+  const stream = fakeTitleStream();
+  const writer = installTitleWriter(stream, () => "ours");
+  const chunk = Buffer.from("\u001b]0;core title\u0007");
+
+  stream.write(chunk);
+  assert.deepEqual(stream.writes, ["\u001b]0;core title\u0007"]);
   writer.dispose();
 });
 
 test("when disposed then title writes pass through again", () => {
-  const stream = fakeStream();
+  const stream = fakeTitleStream();
   const writer = installTitleWriter(stream, () => "ours");
   writer.dispose();
 
@@ -63,8 +66,20 @@ test("when disposed then title writes pass through again", () => {
   assert.deepEqual(stream.writes, ["\u001b]0;core title\u0007"]);
 });
 
+test("when disposed after a foreign wrapper then title writes pass through", () => {
+  const stream = fakeTitleStream();
+  const writer = installTitleWriter(stream, () => "ours");
+  const ourWrite = stream.write;
+  stream.write = (chunk, ...args) => ourWrite(chunk, ...args);
+
+  writer.dispose();
+  stream.writes.length = 0;
+  stream.write("\u001b]0;core title\u0007");
+  assert.deepEqual(stream.writes, ["\u001b]0;core title\u0007"]);
+});
+
 test("when installed twice then only the second writer is active", () => {
-  const stream = fakeStream();
+  const stream = fakeTitleStream();
   const first = installTitleWriter(stream, () => "first");
   const second = installTitleWriter(stream, () => "second");
 

@@ -21,6 +21,7 @@ export function installTitleWriter(
   holder[WRITER_KEY]?.dispose();
 
   const originalWrite = stream.write.bind(stream);
+  let disposed = false;
   const writeTitle = () => {
     originalWrite(`\u001b]0;${title()}\u0007`);
   };
@@ -29,6 +30,7 @@ export function installTitleWriter(
     chunk: string | Uint8Array,
     ...args: any[]
   ): boolean {
+    if (disposed) return originalWrite(chunk, ...args);
     if (typeof chunk === "string" && TITLE_SEQUENCE.test(chunk)) {
       writeTitle();
       return true;
@@ -36,7 +38,6 @@ export function installTitleWriter(
     return originalWrite(chunk, ...args);
   };
 
-  let disposed = false;
   const writer: TitleWriter = {
     render: writeTitle,
     dispose() {

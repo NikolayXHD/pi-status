@@ -9,10 +9,11 @@ import {
 import { buildTitle } from "./src/title.ts";
 import {
   installTitleWriter,
+  type TitleStream,
   type TitleWriter,
 } from "./src/title-writer.ts";
 
-export default function piStatus(pi: ExtensionAPI) {
+export function createPiStatus(pi: ExtensionAPI, stream: TitleStream): void {
   let enabled = false;
   let writer: TitleWriter | undefined;
   let cwd = process.cwd();
@@ -45,9 +46,9 @@ export default function piStatus(pi: ExtensionAPI) {
     const version = stateVersion;
     const id = ++queryId;
     const total = await requestActiveSubagents(pi.events);
-    if (!enabled || id !== queryId || version !== stateVersion) return;
     if (total === null) return;
     rpcReady = true;
+    if (!enabled || id !== queryId || version !== stateVersion) return;
     subagentsActive = total > 0;
     render();
   };
@@ -92,7 +93,7 @@ export default function piStatus(pi: ExtensionAPI) {
     }
 
     subscribeToSubagents();
-    writer = installTitleWriter(process.stdout, title);
+    writer = installTitleWriter(stream, title);
     render();
     void refreshSubagents(true);
   });
@@ -139,4 +140,8 @@ export default function piStatus(pi: ExtensionAPI) {
     for (const unsubscribe of eventUnsubscribes) unsubscribe();
     eventUnsubscribes = [];
   });
+}
+
+export default function piStatus(pi: ExtensionAPI): void {
+  createPiStatus(pi, process.stdout);
 }

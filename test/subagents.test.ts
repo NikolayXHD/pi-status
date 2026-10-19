@@ -8,40 +8,34 @@ import {
   requestActiveSubagents,
   type EventBusLike,
 } from "../src/subagents.ts";
+import { FakeEventBus } from "./helpers.ts";
 
-class FakeEventBus implements EventBusLike {
-  private readonly handlers = new Map<
-    string,
-    Set<(data: unknown) => void>
-  >();
+const INVALID_REPLIES = [
+  null,
+  "reply",
+  { version: 2, success: true, data: { fleet: { totalActive: 1 } } },
+  { version: 1, success: false, data: { fleet: { totalActive: 1 } } },
+  { version: 1, success: true, data: {} },
+  { version: 1, success: true, data: { fleet: {} } },
+  { version: 1, success: true, data: { fleet: { totalActive: "3" } } },
+  { version: 1, success: true, data: { fleet: { totalActive: -1 } } },
+  { version: 1, success: true, data: { fleet: { totalActive: 2.5 } } },
+] as const;
 
-  on(channel: string, handler: (data: unknown) => void): () => void {
-    const handlers = this.handlers.get(channel) ?? new Set();
-    handlers.add(handler);
-    this.handlers.set(channel, handlers);
-    return () => handlers.delete(handler);
+test("when reply shape is invalid then count is unknown", () => {
+  for (const reply of INVALID_REPLIES) {
+    assert.equal(parseActiveSubagents(reply), null);
   }
+});
 
-  emit(channel: string, data: unknown): void {
-    for (const handler of this.handlers.get(channel) ?? []) handler(data);
-  }
-}
-
-test("when reply has fleet then total active is parsed", () => {
+test("when total active is zero then zero is parsed", () => {
   assert.equal(
     parseActiveSubagents({
       version: 1,
       success: true,
-      data: { fleet: { totalActive: 3 } },
+      data: { fleet: { totalActive: 0 } },
     }),
-    3,
-  );
-});
-
-test("when reply is an error then count is unknown", () => {
-  assert.equal(
-    parseActiveSubagents({ version: 1, success: false, data: {} }),
-    null,
+    0,
   );
 });
 
@@ -55,8 +49,17 @@ test("when ready has fleet capability then it is accepted", () => {
   );
 });
 
+const NOT_READY_PAYLOADS = [
+  null,
+  {},
+  { capabilities: null },
+  { capabilities: { fleetStatus: { version: 2 } } },
+] as const;
+
 test("when ready lacks fleet capability then it is rejected", () => {
-  assert.equal(isReadyWithFleet({ version: 1, capabilities: {} }), false);
+  for (const payload of NOT_READY_PAYLOADS) {
+    assert.equal(isReadyWithFleet(payload), false);
+  }
 });
 
 test("when a reply arrives then the request resolves with the count", async () => {
@@ -77,7 +80,41 @@ test("when a reply arrives then the request resolves with the count", async () =
   assert.equal(await pending, 2);
 });
 
+test("when reply request id mismatches then the reply is ignored", async () => {
+  const bus = new FakeEventBus();
+  let requestId = "";
+  bus.on(SUBAGENTS_RPC_REQUEST, (data) => {
+    requestId = (data as { requestId: string }).requestId;
+  });
+
+  const pending = requestActiveSubagents(bus, 50);
+  bus.emit(`${SUBAGENTS_RPC_REPLY_PREFIX}foreign`, {
+    version: 1,
+    requestId: "foreign",
+    success: true,
+    data: { fleet: { totalActive: 3 } },
+  });
+  bus.emit(`${SUBAGENTS_RPC_REPLY_PREFIX}${requestId}`, {
+    version: 1,
+    requestId,
+    success: true,
+    data: { fleet: { totalActive: 2 } },
+  });
+
+  assert.equal(await pending, 2);
+});
+
 test("when no reply arrives then the request resolves as unknown", async () => {
   const bus = new FakeEventBus();
+  assert.equal(await requestActiveSubagents(bus, 10), null);
+});
+
+test("when emit throws then the request resolves as unknown", async () => {
+  const bus: EventBusLike = {
+    on: () => () => {},
+    emit: () => {
+      throw new Error("no handlers");
+    },
+  };
   assert.equal(await requestActiveSubagents(bus, 10), null);
 });
