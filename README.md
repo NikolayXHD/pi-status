@@ -1,0 +1,79 @@
+# pi-status
+
+A Pi extension that owns the terminal title. It shows the current Pi status and
+custom `:tags` from the session name, so tmux and status bars can read one
+ready title instead of reconstructing it from pane state.
+
+## Title
+
+| State                                  | Tag   |
+| -------------------------------------- | ----- |
+| A run or compaction is in progress     | `:⏳` |
+| Pi is idle and subagents are active    | `:👀` |
+| Pi is idle and no subagents are active | `:🖐️` |
+
+The format is `:status :tags name`. Tags are read from the session name and
+moved to the front. For example, `/name :review Fix parser` produces
+`:🖐️ :review Fix parser` while idle, `:⏳ :review Fix parser` while working,
+and `:👀 :review Fix parser` while background subagents are active.
+
+Pi's own `π - name - cwd` title is replaced. If the session has no name, the
+directory name is used.
+
+## Subagents
+
+`:👀` requires [pi-subagents](https://github.com/nicobailon/pi-subagents). The
+extension asks its public RPC for `fleet.totalActive` and listens to the
+`subagent:async-started` and `subagent:async-complete` events. Only active work
+counts; completed subagent history does not keep the eye.
+
+Background work that survives a session replacement in the same Pi process is
+counted as belonging to the current session, because pi-subagents delivers its
+results there. A separate Pi process in another terminal has its own event bus
+and cannot affect this title.
+
+## Install
+
+```sh
+pi install https://github.com/NikolayXHD/pi-status
+```
+
+Restart Pi after installation.
+
+## tmux
+
+With this extension, tmux can use `pane_title` directly:
+
+```tmux
+set -g set-titles on
+set -g set-titles-string '#{?#{pane_title},#{pane_title},#{window_name}}'
+set -g window-status-format '#{window_index}:#{?#{pane_title},#{pane_title},#{window_name}} '
+set -g window-status-current-format '#{window_index}:#{?#{pane_title},#{pane_title},#{window_name}} '
+```
+
+No `pane_pb_state` or `pane_current_command` inspection is needed. The title
+reflects the active pane.
+
+## How it works
+
+The extension intercepts OSC 0 and OSC 2 title writes on `process.stdout` and
+replaces them with its own title. This keeps the startup title and `/reload`
+from erasing the status and makes session renames immediate. The original
+`process.stdout.write` is restored on session shutdown.
+
+Only TUI mode is affected. Print, JSON, and RPC modes do not change the
+terminal title.
+
+## Development
+
+```sh
+npm install
+npm test
+npm run check
+```
+
+Tests use Node's built-in test runner and TypeScript type stripping.
+
+## License
+
+MIT
