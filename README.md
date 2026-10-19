@@ -46,12 +46,13 @@ With this extension, tmux can use `pane_title` directly:
 
 ```tmux
 set -g set-titles on
-set -g set-titles-string '#{?#{pane_title},#{pane_title},#{window_name}}'
-set -g window-status-format '#{window_index}:#{?#{pane_title},#{pane_title},#{window_name}} '
-set -g window-status-current-format '#{window_index}:#{?#{pane_title},#{pane_title},#{window_name}} '
+set -g set-titles-string '#{?#{m/r:^:,#{pane_title}},#{pane_title},#{window_name}}'
+set -g window-status-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{pane_title},#{window_name}} '
+set -g window-status-current-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{pane_title},#{window_name}} '
 ```
 
-No `pane_pb_state` or `pane_current_command` inspection is needed. The title
+No `pane_pb_state` inspection is needed. A pane title starting with a `:tag`
+is the extension title; other panes keep their manual window name. The title
 reflects the active pane.
 
 ## How it works
