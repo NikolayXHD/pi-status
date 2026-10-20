@@ -30,9 +30,9 @@ export function buildTitle(state: TitleState): string {
   const customTags = [
     ...new Set(session.tags.map((tag) => squash(tag)).filter(Boolean)),
   ].filter((tag) => !STATUS_TAGS.has(tag));
-  const tags = [status, ...customTags].map((tag) => `:${tag}`).join(" ");
+  const tags = [status, ...customTags].map((tag) => `:${tag}`).join("");
   const fallback = basename(state.cwd) || "pi";
-  return `${tags}  ${squash(session.name || fallback)}`;
+  return `${tags} ${squash(session.name || fallback)}`;
 }
 
 export function splitSessionName(name: string | undefined): SessionName {

@@ -18,7 +18,7 @@ test("when status flags change then status icon follows priority", () => {
         sessionName: "Fix parser",
         cwd: "/repo",
       }),
-      `${status}  Fix parser`,
+      `${status} Fix parser`,
     );
   }
 });
@@ -31,7 +31,7 @@ test("when session name has tags then they move to the front", () => {
       sessionName: "Fix parser :review",
       cwd: "/repo",
     }),
-    ":⏳ :review  Fix parser",
+    ":⏳:review Fix parser",
   );
 });
 
@@ -44,7 +44,7 @@ test("when session has no name then cwd basename is used", () => {
         sessionName,
         cwd: "/home/kolia/git/pi-status",
       }),
-      ":🖐️  pi-status",
+      ":🖐️ pi-status",
     );
   }
 });
@@ -57,7 +57,7 @@ test("when cwd basename has control characters then they are removed", () => {
       sessionName: undefined,
       cwd: "/bad\nname",
     }),
-    ":🖐️  bad name",
+    ":🖐️ bad name",
   );
 });
 
@@ -69,7 +69,7 @@ test("when cwd has no basename then pi is used", () => {
       sessionName: undefined,
       cwd: "/",
     }),
-    ":🖐️  pi",
+    ":🖐️ pi",
   );
 });
 
@@ -78,10 +78,10 @@ test("when session name has duplicate and status tags then they are removed", ()
     buildTitle({
       busy: false,
       subagentsActive: false,
-      sessionName: ":⏳ :review :review  Fix parser",
+      sessionName: ":⏳:review Fix parser",
       cwd: "/repo",
     }),
-    ":🖐️ :review  Fix parser",
+    ":🖐️:review Fix parser",
   );
 });
 
@@ -93,7 +93,7 @@ test("when session name has a colon followed by a space then it is not a tag", (
       sessionName: "notes: fix parser",
       cwd: "/repo",
     }),
-    ":🖐️  notes: fix parser",
+    ":🖐️ notes: fix parser",
   );
 });
 
@@ -105,7 +105,7 @@ test("when session name has control characters then they are removed", () => {
       sessionName: "Fix\u0007 parser\nnow",
       cwd: "/repo",
     }),
-    ":🖐️  Fix parser now",
+    ":🖐️ Fix parser now",
   );
 });
 

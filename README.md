@@ -12,10 +12,10 @@ ready title instead of reconstructing it from pane state.
 | Pi is idle and subagents are active    | `:👀` |
 | Pi is idle and no subagents are active | `:🖐️` |
 
-The format is `:status :tags name`. Tags are read from the session name and
-moved to the front. For example, `/name :review Fix parser` produces
-`:🖐️ :review Fix parser` while idle, `:⏳ :review Fix parser` while working,
-and `:👀 :review Fix parser` while background subagents are active.
+The format is `:status:tags name`. Tags are read from the session name, moved
+to the front, and glued into one token. For example, `/name :review Fix parser`
+produces `:🖐️:review Fix parser` while idle, `:⏳:review Fix parser` while
+working, and `:👀:review Fix parser` while background subagents are active.
 
 Pi's own `π - name - cwd` title is replaced. If the session has no name, the
 directory name is used.
@@ -52,8 +52,8 @@ set -g window-status-current-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},
 ```
 
 No process inspection is needed. For a pane whose title starts with a `:tag`,
-tmux takes that tag prefix and prepends it to the manual `window_name`. Other
-panes show their manual window name. Manual labels are preserved.
+tmux takes that first tag token and prepends it to the manual `window_name`.
+Other panes show their manual window name. Manual labels are preserved.
 
 ## How it works
 
