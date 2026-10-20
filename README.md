@@ -1,8 +1,7 @@
 # pi-status
 
-A Pi extension that owns the terminal title. It shows the current Pi status and
-custom `:tags` from the session name, so tmux and status bars can read one
-ready title instead of reconstructing it from pane state.
+A Pi extension that owns the terminal title. It shows the current Pi status;
+manual tmux labels are preserved by the consumer.
 
 ## Title
 
@@ -12,10 +11,10 @@ ready title instead of reconstructing it from pane state.
 | Pi is idle and subagents are active    | `:👀` |
 | Pi is idle and no subagents are active | `:🖐️` |
 
-The format is `:status:tags name`. Tags are read from the session name, moved
-to the front, and glued into one token. For example, `/name :review Fix parser`
-produces `:🖐️:review Fix parser` while idle, `:⏳:review Fix parser` while
-working, and `:👀:review Fix parser` while background subagents are active.
+The format is `:status name`. The name is the Pi session name as-is; the
+extension does not interpret or move colons inside it. For example,
+`/name Fix parser` produces `:🖐️ Fix parser` while idle, `:⏳ Fix parser` while
+working, and `:👀 Fix parser` while background subagents are active.
 
 Pi's own `π - name - cwd` title is replaced. If the session has no name, the
 directory name is used.
@@ -46,13 +45,13 @@ With this extension, tmux can use `pane_title` directly:
 
 ```tmux
 set -g set-titles on
-set -g set-titles-string '#{?#{m/r:^:,#{pane_title}},#{s/^(([^ ]+ )*[^ ]+)  .*$/\1/:#{pane_title}} #{window_name},#{window_name}}'
-set -g window-status-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^(([^ ]+ )*[^ ]+)  .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
-set -g window-status-current-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^(([^ ]+ )*[^ ]+)  .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
+set -g set-titles-string '#{?#{m/r:^:,#{pane_title}},#{s/^([^ ]+) .*$/\1/:#{pane_title}} #{window_name},#{window_name}}'
+set -g window-status-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^([^ ]+) .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
+set -g window-status-current-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^([^ ]+) .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
 ```
 
 No process inspection is needed. For a pane whose title starts with a `:tag`,
-tmux takes that first tag token and prepends it to the manual `window_name`.
+tmux takes that first status token and prepends it to the manual `window_name`.
 Other panes show their manual window name. Manual labels are preserved.
 
 ## How it works

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildTitle, splitSessionName } from "../src/title.ts";
+import { buildTitle } from "../src/title.ts";
 
 const STATUS_CASES = [
   { busy: true, subagentsActive: false, status: ":⏳" },
@@ -23,15 +23,15 @@ test("when status flags change then status icon follows priority", () => {
   }
 });
 
-test("when session name has tags then they move to the front", () => {
+test("when session name contains colon tags then they stay in the name", () => {
   assert.equal(
     buildTitle({
-      busy: true,
+      busy: false,
       subagentsActive: false,
-      sessionName: "Fix parser :review",
+      sessionName: ":review Fix parser",
       cwd: "/repo",
     }),
-    ":⏳:review Fix parser",
+    ":🖐️ :review Fix parser",
   );
 });
 
@@ -73,19 +73,7 @@ test("when cwd has no basename then pi is used", () => {
   );
 });
 
-test("when session name has duplicate and status tags then they are removed", () => {
-  assert.equal(
-    buildTitle({
-      busy: false,
-      subagentsActive: false,
-      sessionName: ":⏳:review Fix parser",
-      cwd: "/repo",
-    }),
-    ":🖐️:review Fix parser",
-  );
-});
-
-test("when session name has a colon followed by a space then it is not a tag", () => {
+test("when session name has a colon followed by a space then it is kept", () => {
   assert.equal(
     buildTitle({
       busy: false,
@@ -107,11 +95,4 @@ test("when session name has control characters then they are removed", () => {
     }),
     ":🖐️ Fix parser now",
   );
-});
-
-test("when name mixes tags and text then tags are split off", () => {
-  assert.deepEqual(splitSessionName(":review:urgent  Fix   parser"), {
-    tags: ["review", "urgent"],
-    name: "Fix parser",
-  });
 });

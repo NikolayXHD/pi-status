@@ -1,7 +1,7 @@
 {
   "name": "pi-status",
   "version": "0.1.0",
-  "description": "Pi terminal title with working, waiting, and subagent status plus custom labels",
+  "description": "Pi terminal title with run and subagent status; manual tmux labels are preserved",
   "keywords": [
     "pi-package",
     "pi",
