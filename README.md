@@ -41,7 +41,9 @@ Restart Pi after installation.
 
 ## tmux
 
-With this extension, tmux can use `pane_title` directly:
+The extension writes only the title; it does not parse or move `:tags`. A
+simple tmux config can prepend the first status token to the manual window
+name:
 
 ```tmux
 set -g set-titles on
@@ -50,9 +52,10 @@ set -g window-status-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.
 set -g window-status-current-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^([^ ]+) .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
 ```
 
-No process inspection is needed. For a pane whose title starts with a `:tag`,
-tmux takes that first status token and prepends it to the manual `window_name`.
-Other panes show their manual window name. Manual labels are preserved.
+No process inspection is needed, and manual labels are preserved. The simple
+snippet reads only the first token. To aggregate custom `:tags` from pane
+titles, window names and session names, parse the full title in the tmux
+config; the extension leaves the session name text intact for that parser.
 
 ## How it works
 
