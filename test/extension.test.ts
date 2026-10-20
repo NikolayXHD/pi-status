@@ -106,10 +106,10 @@ function shutdown(fake: FakePi, ctx: ExtensionContext = tuiContext()): void {
 test("when agent starts then clock is written", async () => {
   const fake = setup(0);
   await flush();
-  assert.equal(lastTitle(fake.stream), ":🖐️ Fix parser");
+  assert.equal(lastTitle(fake.stream), ":🖐️  Fix parser");
 
   fake.fire("agent_start");
-  assert.equal(lastTitle(fake.stream), ":⏳ Fix parser");
+  assert.equal(lastTitle(fake.stream), ":⏳  Fix parser");
   shutdown(fake);
 });
 
@@ -121,7 +121,7 @@ test("when agent settles then hand or eye follows subagents", async () => {
     fake.fire("agent_settled");
     await flush();
 
-    const expected = totalActive > 0 ? ":👀 Fix parser" : ":🖐️ Fix parser";
+    const expected = totalActive > 0 ? ":👀  Fix parser" : ":🖐️  Fix parser";
     assert.equal(lastTitle(fake.stream), expected);
     shutdown(fake);
   }
@@ -132,7 +132,7 @@ test("when compaction starts then clock is written", async () => {
   await flush();
 
   fake.fire("session_before_compact");
-  assert.equal(lastTitle(fake.stream), ":⏳ Fix parser");
+  assert.equal(lastTitle(fake.stream), ":⏳  Fix parser");
   shutdown(fake);
 });
 
@@ -143,7 +143,7 @@ test("when compaction ends while run is active then clock stays", async () => {
   fake.fire("agent_start");
   fake.fire("session_before_compact");
   fake.fire("session_compact");
-  assert.equal(lastTitle(fake.stream), ":⏳ Fix parser");
+  assert.equal(lastTitle(fake.stream), ":⏳  Fix parser");
   shutdown(fake);
 });
 
@@ -156,7 +156,7 @@ test("when compaction ends while idle then hand or eye follows subagents", async
     fake.fire("session_compact_failed");
     await flush();
 
-    const expected = totalActive > 0 ? ":👀 Fix parser" : ":🖐️ Fix parser";
+    const expected = totalActive > 0 ? ":👀  Fix parser" : ":🖐️  Fix parser";
     assert.equal(lastTitle(fake.stream), expected);
     shutdown(fake);
   }
@@ -165,10 +165,10 @@ test("when compaction ends while idle then hand or eye follows subagents", async
 test("when async starts while parent is idle then eye appears", async () => {
   const fake = setup(0);
   await flush();
-  assert.equal(lastTitle(fake.stream), ":🖐️ Fix parser");
+  assert.equal(lastTitle(fake.stream), ":🖐️  Fix parser");
 
   fake.bus.emit(SUBAGENTS_ASYNC_STARTED, {});
-  assert.equal(lastTitle(fake.stream), ":👀 Fix parser");
+  assert.equal(lastTitle(fake.stream), ":👀  Fix parser");
   shutdown(fake);
 });
 
@@ -178,7 +178,7 @@ test("when async starts while run is active then clock wins", async () => {
 
   fake.fire("agent_start");
   fake.bus.emit(SUBAGENTS_ASYNC_STARTED, {});
-  assert.equal(lastTitle(fake.stream), ":⏳ Fix parser");
+  assert.equal(lastTitle(fake.stream), ":⏳  Fix parser");
   shutdown(fake);
 });
 
@@ -224,7 +224,7 @@ test("when state changes before reply then stale reply is ignored", async () => 
   assert.equal(requests.length, 1);
 
   fake.fire("agent_start");
-  assert.equal(lastTitle(stream), ":⏳ Fix parser");
+  assert.equal(lastTitle(stream), ":⏳  Fix parser");
 
   const request = requests[0];
   fake.bus.emit(`${SUBAGENTS_RPC_REPLY_PREFIX}${request.requestId}`, {
@@ -235,6 +235,6 @@ test("when state changes before reply then stale reply is ignored", async () => 
   });
   await flush();
 
-  assert.equal(lastTitle(stream), ":⏳ Fix parser");
+  assert.equal(lastTitle(stream), ":⏳  Fix parser");
   shutdown(fake);
 });

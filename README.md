@@ -46,15 +46,14 @@ With this extension, tmux can use `pane_title` directly:
 
 ```tmux
 set -g set-titles on
-set -g set-titles-string '#{?#{m/r:^:,#{pane_title}},#{pane_title},#{window_name}}'
-set -g window-status-format '#{window_index}#{?#{m/r:^:,#{pane_title}},#{pane_title},:#{window_name}} '
-set -g window-status-current-format '#{window_index}#{?#{m/r:^:,#{pane_title}},#{pane_title},:#{window_name}} '
+set -g set-titles-string '#{?#{m/r:^:,#{pane_title}},#{s/^(([^ ]+ )*[^ ]+)  .*$/\1/:#{pane_title}} #{window_name},#{window_name}}'
+set -g window-status-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^(([^ ]+ )*[^ ]+)  .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
+set -g window-status-current-format '#{window_index}:#{?#{m/r:^:,#{pane_title}},#{s|^.(.*)$|\1|:#{s/^(([^ ]+ )*[^ ]+)  .*$/\1/:#{pane_title}}} #{window_name},#{window_name}} '
 ```
 
-No process inspection is needed. A pane title that starts with a `:tag` is
-the extension's text; other panes show their manual tmux window name. This is
-a check of the title text, not of the running process. The title reflects the
-active pane.
+No process inspection is needed. For a pane whose title starts with a `:tag`,
+tmux takes that tag prefix and prepends it to the manual `window_name`. Other
+panes show their manual window name. Manual labels are preserved.
 
 ## How it works
 
